@@ -16,7 +16,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
 	private static final String[] PUBLIC_PATHS = { "/api/v1/auth/register", "/api/v1/auth/login",
-			"/api/v1/auth/refresh", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/actuator/health" };
+			"/api/v1/auth/refresh", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/actuator/health",
+			"/health" };
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
