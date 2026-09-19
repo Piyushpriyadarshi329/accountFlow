@@ -1,0 +1,41 @@
+# Render blueprint. Create the service from this with:
+#   Render dashboard -> New -> Blueprint -> point at this repository.
+#
+# Secrets are NOT in this file. Anything marked `sync: false` must be filled in
+# from the Render dashboard, so the values never land in version control.
+services:
+  - type: web
+    name: accountflow-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore
+    # Backed by spring-boot-starter-actuator; returns {"status":"UP"} and no
+    # component detail.
+    #
+    # Note the actual failure mode: if MongoDB is unreachable the application
+    # does not start at all - bean creation fails and Tomcat never binds - so a
+    # bad MONGODB_URI shows up as a failed deploy ("no open ports detected" or a
+    # health-check timeout), not as a DOWN health response. Check the deploy
+    # logs, not this endpoint, when a first deploy will not come up.
+    healthCheckPath: /actuator/health
+    envVars:
+      # Set in the dashboard. Use a database user scoped to this application,
+      # not an admin one, and add Render's outbound IPs to the Atlas allow-list
+      # (or allow 0.0.0.0/0 only if you accept the exposure).
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DATABASE
+        value: AccountFlow
+      # Render generates a strong value on first deploy and keeps it stable.
+      # Rotating it invalidates every issued token, which is the point.
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 7d
+      # Browser origins allowed to call the API. Native apps ignore CORS, so
+      # this only matters for a web client. Leave unset if there is none.
+      - key: CORS_ORIGINS
+        sync: false

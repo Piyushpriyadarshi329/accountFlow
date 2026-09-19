@@ -1,0 +1,21 @@
+# Secrets must never enter the build context. .env holds a live MongoDB URI and
+# the JWT signing key; anything in the context can end up in an image layer.
+.env
+.env.*
+
+# The image compiles from source in its build stage, so a local build output
+# would only bloat the context (and risk shipping a stale jar).
+target/
+
+.git/
+.gitignore
+.gitattributes
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Not needed to build or run the service.
+postman/
+scripts/
+*.md
