@@ -1,0 +1,69 @@
+package com.accountflow.common.exception;
+
+import org.springframework.http.HttpStatus;
+
+/**
+ * The full error contract for the API. Codes are stable strings clients may
+ * branch on; the HTTP status is an implementation detail of the transport.
+ */
+public enum ErrorCode {
+
+	// generic
+	VALIDATION_ERROR(HttpStatus.BAD_REQUEST),
+	MALFORMED_REQUEST(HttpStatus.BAD_REQUEST),
+	RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND),
+	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR),
+
+	// auth
+	INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED),
+	UNAUTHENTICATED(HttpStatus.UNAUTHORIZED),
+	ACCESS_DENIED(HttpStatus.FORBIDDEN),
+	TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED),
+	TOKEN_INVALID(HttpStatus.UNAUTHORIZED),
+	REFRESH_TOKEN_REUSED(HttpStatus.UNAUTHORIZED),
+	USER_LOCKED(HttpStatus.LOCKED),
+	USER_INACTIVE(HttpStatus.FORBIDDEN),
+
+	// user
+	USER_NOT_FOUND(HttpStatus.NOT_FOUND),
+	EMAIL_ALREADY_EXISTS(HttpStatus.CONFLICT),
+	PHONE_ALREADY_EXISTS(HttpStatus.CONFLICT),
+
+	// account
+	ACCOUNT_NOT_FOUND(HttpStatus.NOT_FOUND),
+	ACCOUNT_CLOSED(HttpStatus.UNPROCESSABLE_ENTITY),
+	ACCOUNT_INACTIVE(HttpStatus.UNPROCESSABLE_ENTITY),
+	UNAUTHORIZED_ACCOUNT_ACCESS(HttpStatus.NOT_FOUND),
+	DUPLICATE_ACCOUNT_NUMBER(HttpStatus.CONFLICT),
+	ACCOUNT_NOT_EMPTY(HttpStatus.UNPROCESSABLE_ENTITY),
+
+	// money movement
+	INSUFFICIENT_BALANCE(HttpStatus.UNPROCESSABLE_ENTITY),
+	INVALID_AMOUNT(HttpStatus.BAD_REQUEST),
+	CURRENCY_MISMATCH(HttpStatus.UNPROCESSABLE_ENTITY),
+	TRANSACTION_NOT_FOUND(HttpStatus.NOT_FOUND),
+	DUPLICATE_TRANSACTION(HttpStatus.CONFLICT),
+	TRANSFER_FAILED(HttpStatus.UNPROCESSABLE_ENTITY),
+	TRANSFER_NOT_FOUND(HttpStatus.NOT_FOUND),
+	SAME_ACCOUNT_TRANSFER(HttpStatus.BAD_REQUEST),
+	TRANSACTION_ALREADY_REVERSED(HttpStatus.UNPROCESSABLE_ENTITY),
+
+	// idempotency
+	IDEMPOTENCY_KEY_REQUIRED(HttpStatus.BAD_REQUEST),
+	IDEMPOTENCY_KEY_REUSED(HttpStatus.UNPROCESSABLE_ENTITY),
+	REQUEST_IN_PROGRESS(HttpStatus.CONFLICT),
+
+	// throttling
+	RATE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS);
+
+	private final HttpStatus status;
+
+	ErrorCode(HttpStatus status) {
+		this.status = status;
+	}
+
+	public HttpStatus status() {
+		return this.status;
+	}
+
+}

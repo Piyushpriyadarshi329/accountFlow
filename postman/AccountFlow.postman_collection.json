@@ -1,0 +1,3473 @@
+{
+  "info": {
+    "name": "AccountFlow API",
+    "_postman_id": "a1c0f10w-0000-4000-8000-accountflow01",
+    "description": "Personal financial account management: bank accounts, cards, transactions, transfers and physical cash.\n\n### Authentication\nEvery endpoint except `/api/v1/auth/register`, `/api/v1/auth/login` and `/api/v1/auth/refresh` requires a bearer token. The signed-in user is taken from the token, never from a path or body, and one user can never read or modify another's data - a foreign resource answers `404`, not `403`, so the API cannot be used to discover ids.\n\n### Money values\nAll monetary amounts are JSON **strings** at the currency's exact scale, for example `\"10000.00\"`. A JSON number would be parsed as an IEEE-754 double by most clients and lose precision. Amounts must be positive, and an amount with more decimal places than the currency allows is rejected rather than rounded.\n\n### Idempotency\nEvery money-moving endpoint requires an `Idempotency-Key` header. Retrying with the same key returns the original result instead of moving money twice. Reusing a key with a different body is rejected with `IDEMPOTENCY_KEY_REUSED`.\n\n### Errors\nFailures share one shape: `success: false` plus a stable `code` your client can branch on, a human-readable `message`, the `path`, and the `requestId` also returned in the `X-Request-Id` response header.\n\n---\n\n## Using this collection\n\n1. Import this file and `AccountFlow.postman_environment.json`.\n2. Set `baseUrl` (default `http://localhost:8082`).\n3. Send **Authentication \u2192 Register a new user**. The test script stores\n   `accessToken`, `refreshToken` and `userId` automatically, and every other\n   request inherits the bearer token, so nothing needs pasting by hand.\n4. Send **Accounts \u2192 Create an account**; `accountId` is captured the same way.\n5. Everything else is then runnable in order.\n\nCaptured automatically: `accessToken`, `refreshToken`, `userId`, `accountId`,\n`transactionId`, `transferId`.\n\n`Idempotency-Key` is set to `{{$guid}}`, so each send is a new operation. To\ntest a retry, replace it with a fixed string and send twice: the second call\nreturns the first result and moves no money.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "email",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": "Secret123"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "accountId",
+      "value": ""
+    },
+    {
+      "key": "secondAccountId",
+      "value": ""
+    },
+    {
+      "key": "transactionId",
+      "value": ""
+    },
+    {
+      "key": "transferId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Registration, sign-in and token lifecycle",
+      "item": [
+        {
+          "name": "Register a new user and return an initial token pair",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user and return an initial token pair",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Piyush\",\n  \"lastName\": \"Priyadarshi\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Piyush\",\n  \"lastName\": \"Priyadarshi\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accessToken\": \"eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI2YWFlMGNmMSJ9.Ux7f\",\n    \"refreshToken\": \"ov-yE5EyDnXT2-yiMwO_yF6EpAUfvh402K12kaPp0uM\",\n    \"tokenType\": \"Bearer\",\n    \"expiresInSeconds\": 900,\n    \"user\": {\n      \"id\": \"6aae0cf1e3bf0dab89a49c81\",\n      \"firstName\": \"Piyush\",\n      \"lastName\": \"Priyadarshi\",\n      \"email\": \"piyush@example.com\",\n      \"phone\": \"+919876543210\",\n      \"role\": \"USER\",\n      \"status\": \"ACTIVE\",\n      \"createdAt\": \"2026-09-19T10:30:00Z\",\n      \"updatedAt\": \"2026-09-19T10:30:00Z\"\n    }\n  },\n  \"message\": \"Register a new user and return an initial token pair\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/register",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "register"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Piyush\",\n  \"lastName\": \"Priyadarshi\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "400",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"VALIDATION_ERROR\",\n  \"message\": \"Request validation failed\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/auth/register\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// A fresh identity per run, so this collection can be re-run",
+                  "// indefinitely: email is globally unique on the server.",
+                  "pm.collectionVariables.set('email', `accountflow.${Date.now()}@example.com`);",
+                  "pm.collectionVariables.set('password', 'Secret123');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.success) {",
+                  "  pm.collectionVariables.set('accessToken', b.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', b.data.refreshToken);",
+                  "  pm.collectionVariables.set('userId', b.data.user.id);",
+                  "}",
+                  "pm.test('registered', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Exchange credentials for an access and refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Exchange credentials for an access and refresh token",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accessToken\": \"eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI2YWFlMGNmMSJ9.Ux7f\",\n    \"refreshToken\": \"ov-yE5EyDnXT2-yiMwO_yF6EpAUfvh402K12kaPp0uM\",\n    \"tokenType\": \"Bearer\",\n    \"expiresInSeconds\": 900,\n    \"user\": {\n      \"id\": \"6aae0cf1e3bf0dab89a49c81\",\n      \"firstName\": \"Piyush\",\n      \"lastName\": \"Priyadarshi\",\n      \"email\": \"piyush@example.com\",\n      \"phone\": \"+919876543210\",\n      \"role\": \"USER\",\n      \"status\": \"ACTIVE\",\n      \"createdAt\": \"2026-09-19T10:30:00Z\",\n      \"updatedAt\": \"2026-09-19T10:30:00Z\"\n    }\n  },\n  \"message\": \"Exchange credentials for an access and refresh token\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "login"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "400",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"VALIDATION_ERROR\",\n  \"message\": \"Request validation failed\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/auth/login\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.success) {",
+                  "  pm.collectionVariables.set('accessToken', b.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', b.data.refreshToken);",
+                  "  pm.collectionVariables.set('userId', b.data.user.id);",
+                  "}",
+                  "pm.test('signed in', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rotate a refresh token for a new token pair",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Rotate a refresh token for a new token pair",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accessToken\": \"eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiI2YWFlMGNmMSJ9.Ux7f\",\n    \"refreshToken\": \"ov-yE5EyDnXT2-yiMwO_yF6EpAUfvh402K12kaPp0uM\",\n    \"tokenType\": \"Bearer\",\n    \"expiresInSeconds\": 900,\n    \"user\": {\n      \"id\": \"6aae0cf1e3bf0dab89a49c81\",\n      \"firstName\": \"Piyush\",\n      \"lastName\": \"Priyadarshi\",\n      \"email\": \"piyush@example.com\",\n      \"phone\": \"+919876543210\",\n      \"role\": \"USER\",\n      \"status\": \"ACTIVE\",\n      \"createdAt\": \"2026-09-19T10:30:00Z\",\n      \"updatedAt\": \"2026-09-19T10:30:00Z\"\n    }\n  },\n  \"message\": \"Rotate a refresh token for a new token pair\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 400",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/refresh",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "refresh"
+                  ]
+                },
+                "auth": {
+                  "type": "noauth"
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "400",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"VALIDATION_ERROR\",\n  \"message\": \"Request validation failed\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/auth/refresh\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.success) {",
+                  "  // The presented token is now revoked - store the rotated one or the next",
+                  "  // refresh will look like token theft and revoke the whole family.",
+                  "  pm.collectionVariables.set('accessToken', b.data.accessToken);",
+                  "  pm.collectionVariables.set('refreshToken', b.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "Profile of the signed-in user",
+      "item": [
+        {
+          "name": "Get the signed-in user's profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ]
+            },
+            "description": "Get the signed-in user's profile"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "me"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae0cf1e3bf0dab89a49c81\",\n    \"firstName\": \"Piyush\",\n    \"lastName\": \"Priyadarshi\",\n    \"email\": \"piyush@example.com\",\n    \"phone\": \"+919876543210\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"createdAt\": \"2026-09-19T10:30:00Z\",\n    \"updatedAt\": \"2026-09-19T10:30:00Z\"\n  },\n  \"message\": \"Get the signed-in user's profile\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "me"
+                  ]
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/users/me\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update the signed-in user's profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/users/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users",
+                "me"
+              ]
+            },
+            "description": "Update the signed-in user's profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Piyush\",\n  \"lastName\": \"Priyadarshi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "me"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Piyush\",\n  \"lastName\": \"Priyadarshi\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae0cf1e3bf0dab89a49c81\",\n    \"firstName\": \"Piyush\",\n    \"lastName\": \"Priyadarshi\",\n    \"email\": \"piyush@example.com\",\n    \"phone\": \"+919876543210\",\n    \"role\": \"USER\",\n    \"status\": \"ACTIVE\",\n    \"createdAt\": \"2026-09-19T10:30:00Z\",\n    \"updatedAt\": \"2026-09-19T10:30:00Z\"\n  },\n  \"message\": \"Update the signed-in user's profile\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/users/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "users",
+                    "me"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Piyush\",\n  \"lastName\": \"Priyadarshi\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/users/me\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "description": "Bank accounts, cards and wallets belonging to the signed-in user",
+      "item": [
+        {
+          "name": "Create an account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts"
+              ]
+            },
+            "description": "Create an account",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountName\": \"HDFC Savings\",\n  \"bankName\": \"HDFC Bank\",\n  \"accountType\": \"SAVINGS\",\n  \"currency\": \"INR\",\n  \"accountNumber\": \"50100123456789\",\n  \"openingBalance\": \"50000.00\",\n  \"creditLimit\": \"0.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"accountName\": \"HDFC Savings\",\n  \"bankName\": \"HDFC Bank\",\n  \"accountType\": \"SAVINGS\",\n  \"currency\": \"INR\",\n  \"accountNumber\": \"50100123456789\",\n  \"openingBalance\": \"50000.00\",\n  \"creditLimit\": \"0.00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae292ca0da9a703f6e3914\",\n    \"accountName\": \"HDFC Savings\",\n    \"bankName\": \"HDFC Bank\",\n    \"accountNumber\": \"50100123456789\",\n    \"accountType\": \"SAVINGS\",\n    \"currency\": \"INR\",\n    \"openingBalance\": \"50000.00\",\n    \"currentBalance\": \"40000.00\",\n    \"creditLimit\": \"0.00\",\n    \"availableBalance\": \"40000.00\",\n    \"status\": \"ACTIVE\",\n    \"cashWallet\": false,\n    \"createdAt\": \"2026-09-19T10:30:00Z\",\n    \"updatedAt\": \"2026-09-19T10:30:00Z\"\n  },\n  \"message\": \"Create an account\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"accountName\": \"HDFC Savings\",\n  \"bankName\": \"HDFC Bank\",\n  \"accountType\": \"SAVINGS\",\n  \"currency\": \"INR\",\n  \"accountNumber\": \"50100123456789\",\n  \"openingBalance\": \"50000.00\",\n  \"creditLimit\": \"0.00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/accounts\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.success) pm.collectionVariables.set('accountId', b.data.id);",
+                  "pm.test('account created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a second account (transfer destination)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts"
+              ]
+            },
+            "description": "Create an account",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountName\": \"SBI Savings\",\n  \"bankName\": \"SBI\",\n  \"accountType\": \"SAVINGS\",\n  \"currency\": \"INR\",\n  \"accountNumber\": \"20100987654321\",\n  \"openingBalance\": \"20000.00\",\n  \"creditLimit\": \"0.00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.success) pm.collectionVariables.set('secondAccountId', b.data.id);",
+                  "pm.test('second account created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List the signed-in user's accounts (excludes the cash account)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts?page=0&size=20&sort=transactionDate,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Zero-based page index"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Page size"
+                },
+                {
+                  "key": "sort",
+                  "value": "transactionDate,desc",
+                  "description": "field,asc|desc"
+                }
+              ]
+            },
+            "description": "List the signed-in user's accounts (excludes the cash account)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts?page=0&size=20&sort=transactionDate,desc",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Zero-based page index"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "description": "Page size"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "transactionDate,desc",
+                      "description": "field,asc|desc"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"6aae292ca0da9a703f6e3914\",\n      \"accountName\": \"HDFC Savings\",\n      \"bankName\": \"HDFC Bank\",\n      \"accountNumber\": \"50100123456789\",\n      \"accountType\": \"SAVINGS\",\n      \"currency\": \"INR\",\n      \"openingBalance\": \"50000.00\",\n      \"currentBalance\": \"40000.00\",\n      \"creditLimit\": \"0.00\",\n      \"availableBalance\": \"40000.00\",\n      \"status\": \"ACTIVE\",\n      \"cashWallet\": false,\n      \"createdAt\": \"2026-09-19T10:30:00Z\",\n      \"updatedAt\": \"2026-09-19T10:30:00Z\"\n    }\n  ],\n  \"message\": \"List the signed-in user's accounts (excludes the cash account)\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts?page=0&size=20&sort=transactionDate,desc",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Zero-based page index"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "description": "Page size"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "transactionDate,desc",
+                      "description": "field,asc|desc"
+                    }
+                  ]
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/accounts\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get one account",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts/:accountId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts",
+                ":accountId"
+              ],
+              "variable": [
+                {
+                  "key": "accountId",
+                  "value": "{{accountId}}",
+                  "description": "accountId of the resource"
+                }
+              ]
+            },
+            "description": "Get one account"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae292ca0da9a703f6e3914\",\n    \"accountName\": \"HDFC Savings\",\n    \"bankName\": \"HDFC Bank\",\n    \"accountNumber\": \"50100123456789\",\n    \"accountType\": \"SAVINGS\",\n    \"currency\": \"INR\",\n    \"openingBalance\": \"50000.00\",\n    \"currentBalance\": \"40000.00\",\n    \"creditLimit\": \"0.00\",\n    \"availableBalance\": \"40000.00\",\n    \"status\": \"ACTIVE\",\n    \"cashWallet\": false,\n    \"createdAt\": \"2026-09-19T10:30:00Z\",\n    \"updatedAt\": \"2026-09-19T10:30:00Z\"\n  },\n  \"message\": \"Get one account\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/accounts/{accountId}\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update an account's descriptive fields",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts/:accountId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts",
+                ":accountId"
+              ],
+              "variable": [
+                {
+                  "key": "accountId",
+                  "value": "{{accountId}}",
+                  "description": "accountId of the resource"
+                }
+              ]
+            },
+            "description": "Update an account's descriptive fields",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountName\": \"HDFC Salary Account\",\n  \"bankName\": \"HDFC Bank\",\n  \"accountNumber\": \"50100123456789\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"accountName\": \"HDFC Salary Account\",\n  \"bankName\": \"HDFC Bank\",\n  \"accountNumber\": \"50100123456789\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae292ca0da9a703f6e3914\",\n    \"accountName\": \"HDFC Savings\",\n    \"bankName\": \"HDFC Bank\",\n    \"accountNumber\": \"50100123456789\",\n    \"accountType\": \"SAVINGS\",\n    \"currency\": \"INR\",\n    \"openingBalance\": \"50000.00\",\n    \"currentBalance\": \"40000.00\",\n    \"creditLimit\": \"0.00\",\n    \"availableBalance\": \"40000.00\",\n    \"status\": \"ACTIVE\",\n    \"cashWallet\": false,\n    \"createdAt\": \"2026-09-19T10:30:00Z\",\n    \"updatedAt\": \"2026-09-19T10:30:00Z\"\n  },\n  \"message\": \"Update an account's descriptive fields\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"accountName\": \"HDFC Salary Account\",\n  \"bankName\": \"HDFC Bank\",\n  \"accountNumber\": \"50100123456789\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/accounts/{accountId}\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Activate, deactivate or close an account",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts/:accountId/status",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts",
+                ":accountId",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "accountId",
+                  "value": "{{accountId}}",
+                  "description": "accountId of the resource"
+                }
+              ]
+            },
+            "description": "Activate, deactivate or close an account",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId/status",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"ACTIVE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae292ca0da9a703f6e3914\",\n    \"accountName\": \"HDFC Savings\",\n    \"bankName\": \"HDFC Bank\",\n    \"accountNumber\": \"50100123456789\",\n    \"accountType\": \"SAVINGS\",\n    \"currency\": \"INR\",\n    \"openingBalance\": \"50000.00\",\n    \"currentBalance\": \"40000.00\",\n    \"creditLimit\": \"0.00\",\n    \"availableBalance\": \"40000.00\",\n    \"status\": \"ACTIVE\",\n    \"cashWallet\": false,\n    \"createdAt\": \"2026-09-19T10:30:00Z\",\n    \"updatedAt\": \"2026-09-19T10:30:00Z\"\n  },\n  \"message\": \"Activate, deactivate or close an account\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId/status",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"ACTIVE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/accounts/{accountId}/status\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "description": "Credits, debits and transaction history",
+      "item": [
+        {
+          "name": "Credit money into an account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts/:accountId/transactions/credit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts",
+                ":accountId",
+                "transactions",
+                "credit"
+              ],
+              "variable": [
+                {
+                  "key": "accountId",
+                  "value": "{{accountId}}",
+                  "description": "accountId of the resource"
+                }
+              ]
+            },
+            "description": "Requires an Idempotency-Key header. Retrying with the same key returns the original transaction instead of posting again.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"5000.00\",\n  \"category\": \"SALARY\",\n  \"description\": \"Monthly salary\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId/transactions/credit",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId",
+                    "transactions",
+                    "credit"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": \"5000.00\",\n  \"category\": \"SALARY\",\n  \"description\": \"Monthly salary\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae11d2ee956131aeefc38d\",\n    \"transactionReference\": \"TXN-MU7WDIXJ-5825V2G4\",\n    \"accountId\": \"6aae292ca0da9a703f6e3914\",\n    \"accountName\": \"HDFC Savings\",\n    \"transactionType\": \"DEBIT\",\n    \"direction\": \"OUT\",\n    \"amount\": \"3000.00\",\n    \"currency\": \"INR\",\n    \"balanceBefore\": \"15000.00\",\n    \"balanceAfter\": \"12000.00\",\n    \"category\": \"SHOPPING\",\n    \"description\": \"Laptop purchase\",\n    \"merchant\": \"Amazon\",\n    \"transactionDate\": \"2026-09-19T10:30:00Z\",\n    \"postedAt\": \"2026-09-19T10:30:00Z\",\n    \"status\": \"POSTED\",\n    \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n    \"reversalOf\": \"string\",\n    \"metadata\": {\n      \"paymentMethod\": \"UPI\",\n      \"referenceNumber\": \"UPI123456\"\n    }\n  },\n  \"message\": \"Credit money into an account\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId/transactions/credit",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId",
+                    "transactions",
+                    "credit"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": \"5000.00\",\n  \"category\": \"SALARY\",\n  \"description\": \"Monthly salary\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "422",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"INSUFFICIENT_BALANCE\",\n  \"message\": \"Insufficient account balance\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/accounts/{accountId}/transactions/credit\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.success) pm.collectionVariables.set('transactionId', b.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Debit money from an account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts/:accountId/transactions/debit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts",
+                ":accountId",
+                "transactions",
+                "debit"
+              ],
+              "variable": [
+                {
+                  "key": "accountId",
+                  "value": "{{accountId}}",
+                  "description": "accountId of the resource"
+                }
+              ]
+            },
+            "description": "Rejected with INSUFFICIENT_BALANCE unless the account has the funds, or a credit limit covering the shortfall.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"3000.00\",\n  \"category\": \"SHOPPING\",\n  \"description\": \"Laptop purchase\",\n  \"merchant\": \"Amazon\",\n  \"metadata\": {\n    \"paymentMethod\": \"UPI\",\n    \"referenceNumber\": \"UPI123456\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId/transactions/debit",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId",
+                    "transactions",
+                    "debit"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": \"3000.00\",\n  \"category\": \"SHOPPING\",\n  \"description\": \"Laptop purchase\",\n  \"merchant\": \"Amazon\",\n  \"metadata\": {\n    \"paymentMethod\": \"UPI\",\n    \"referenceNumber\": \"UPI123456\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae11d2ee956131aeefc38d\",\n    \"transactionReference\": \"TXN-MU7WDIXJ-5825V2G4\",\n    \"accountId\": \"6aae292ca0da9a703f6e3914\",\n    \"accountName\": \"HDFC Savings\",\n    \"transactionType\": \"DEBIT\",\n    \"direction\": \"OUT\",\n    \"amount\": \"3000.00\",\n    \"currency\": \"INR\",\n    \"balanceBefore\": \"15000.00\",\n    \"balanceAfter\": \"12000.00\",\n    \"category\": \"SHOPPING\",\n    \"description\": \"Laptop purchase\",\n    \"merchant\": \"Amazon\",\n    \"transactionDate\": \"2026-09-19T10:30:00Z\",\n    \"postedAt\": \"2026-09-19T10:30:00Z\",\n    \"status\": \"POSTED\",\n    \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n    \"reversalOf\": \"string\",\n    \"metadata\": {\n      \"paymentMethod\": \"UPI\",\n      \"referenceNumber\": \"UPI123456\"\n    }\n  },\n  \"message\": \"Debit money from an account\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId/transactions/debit",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId",
+                    "transactions",
+                    "debit"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": \"3000.00\",\n  \"category\": \"SHOPPING\",\n  \"description\": \"Laptop purchase\",\n  \"merchant\": \"Amazon\",\n  \"metadata\": {\n    \"paymentMethod\": \"UPI\",\n    \"referenceNumber\": \"UPI123456\"\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "422",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"INSUFFICIENT_BALANCE\",\n  \"message\": \"Insufficient account balance\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/accounts/{accountId}/transactions/debit\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.success) pm.collectionVariables.set('transactionId', b.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List one account's transactions, newest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts/:accountId/transactions?page=0&size=20&sort=transactionDate,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts",
+                ":accountId",
+                "transactions"
+              ],
+              "variable": [
+                {
+                  "key": "accountId",
+                  "value": "{{accountId}}",
+                  "description": "accountId of the resource"
+                }
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Zero-based page index"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Page size"
+                },
+                {
+                  "key": "sort",
+                  "value": "transactionDate,desc",
+                  "description": "field,asc|desc"
+                }
+              ]
+            },
+            "description": "List one account's transactions, newest first"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId/transactions?page=0&size=20&sort=transactionDate,desc",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId",
+                    "transactions"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Zero-based page index"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "description": "Page size"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "transactionDate,desc",
+                      "description": "field,asc|desc"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"6aae11d2ee956131aeefc38d\",\n      \"transactionReference\": \"TXN-MU7WDIXJ-5825V2G4\",\n      \"accountId\": \"6aae292ca0da9a703f6e3914\",\n      \"accountName\": \"HDFC Savings\",\n      \"transactionType\": \"DEBIT\",\n      \"direction\": \"OUT\",\n      \"amount\": \"3000.00\",\n      \"currency\": \"INR\",\n      \"balanceBefore\": \"15000.00\",\n      \"balanceAfter\": \"12000.00\",\n      \"category\": \"SHOPPING\",\n      \"description\": \"Laptop purchase\",\n      \"merchant\": \"Amazon\",\n      \"transactionDate\": \"2026-09-19T10:30:00Z\",\n      \"postedAt\": \"2026-09-19T10:30:00Z\",\n      \"status\": \"POSTED\",\n      \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n      \"reversalOf\": \"string\",\n      \"metadata\": {\n        \"paymentMethod\": \"UPI\",\n        \"referenceNumber\": \"UPI123456\"\n      }\n    }\n  ],\n  \"pagination\": {\n    \"page\": 0,\n    \"size\": 20,\n    \"totalElements\": 1,\n    \"totalPages\": 1\n  },\n  \"message\": \"List one account's transactions, newest first\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId/transactions?page=0&size=20&sort=transactionDate,desc",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId",
+                    "transactions"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Zero-based page index"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "description": "Page size"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "transactionDate,desc",
+                      "description": "field,asc|desc"
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/accounts/{accountId}/transactions\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List all of the signed-in user's transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/transactions?page=0&size=20&sort=transactionDate,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Zero-based page index"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Page size"
+                },
+                {
+                  "key": "sort",
+                  "value": "transactionDate,desc",
+                  "description": "field,asc|desc"
+                }
+              ]
+            },
+            "description": "List all of the signed-in user's transactions"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transactions?page=0&size=20&sort=transactionDate,desc",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transactions"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Zero-based page index"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "description": "Page size"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "transactionDate,desc",
+                      "description": "field,asc|desc"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"6aae11d2ee956131aeefc38d\",\n      \"transactionReference\": \"TXN-MU7WDIXJ-5825V2G4\",\n      \"accountId\": \"6aae292ca0da9a703f6e3914\",\n      \"accountName\": \"HDFC Savings\",\n      \"transactionType\": \"DEBIT\",\n      \"direction\": \"OUT\",\n      \"amount\": \"3000.00\",\n      \"currency\": \"INR\",\n      \"balanceBefore\": \"15000.00\",\n      \"balanceAfter\": \"12000.00\",\n      \"category\": \"SHOPPING\",\n      \"description\": \"Laptop purchase\",\n      \"merchant\": \"Amazon\",\n      \"transactionDate\": \"2026-09-19T10:30:00Z\",\n      \"postedAt\": \"2026-09-19T10:30:00Z\",\n      \"status\": \"POSTED\",\n      \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n      \"reversalOf\": \"string\",\n      \"metadata\": {\n        \"paymentMethod\": \"UPI\",\n        \"referenceNumber\": \"UPI123456\"\n      }\n    }\n  ],\n  \"pagination\": {\n    \"page\": 0,\n    \"size\": 20,\n    \"totalElements\": 1,\n    \"totalPages\": 1\n  },\n  \"message\": \"List all of the signed-in user's transactions\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transactions?page=0&size=20&sort=transactionDate,desc",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transactions"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Zero-based page index"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "description": "Page size"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "transactionDate,desc",
+                      "description": "field,asc|desc"
+                    }
+                  ]
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/transactions\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get one transaction",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/transactions/:transactionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "transactions",
+                ":transactionId"
+              ],
+              "variable": [
+                {
+                  "key": "transactionId",
+                  "value": "{{transactionId}}",
+                  "description": "transactionId of the resource"
+                }
+              ]
+            },
+            "description": "Get one transaction"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transactions/:transactionId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transactions",
+                    ":transactionId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "transactionId",
+                      "value": "{{transactionId}}",
+                      "description": "transactionId of the resource"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae11d2ee956131aeefc38d\",\n    \"transactionReference\": \"TXN-MU7WDIXJ-5825V2G4\",\n    \"accountId\": \"6aae292ca0da9a703f6e3914\",\n    \"accountName\": \"HDFC Savings\",\n    \"transactionType\": \"DEBIT\",\n    \"direction\": \"OUT\",\n    \"amount\": \"3000.00\",\n    \"currency\": \"INR\",\n    \"balanceBefore\": \"15000.00\",\n    \"balanceAfter\": \"12000.00\",\n    \"category\": \"SHOPPING\",\n    \"description\": \"Laptop purchase\",\n    \"merchant\": \"Amazon\",\n    \"transactionDate\": \"2026-09-19T10:30:00Z\",\n    \"postedAt\": \"2026-09-19T10:30:00Z\",\n    \"status\": \"POSTED\",\n    \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n    \"reversalOf\": \"string\",\n    \"metadata\": {\n      \"paymentMethod\": \"UPI\",\n      \"referenceNumber\": \"UPI123456\"\n    }\n  },\n  \"message\": \"Get one transaction\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transactions/:transactionId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transactions",
+                    ":transactionId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "transactionId",
+                      "value": "{{transactionId}}",
+                      "description": "transactionId of the resource"
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/transactions/{transactionId}\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Transfers",
+      "description": "Moving money between accounts, and between bank and cash",
+      "item": [
+        {
+          "name": "Transfer between two of the signed-in user's accounts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/transfers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "transfers"
+              ]
+            },
+            "description": "Both legs commit together inside one MongoDB transaction, or neither does.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"{{accountId}}\",\n  \"destinationAccountId\": \"{{secondAccountId}}\",\n  \"amount\": \"1000.00\",\n  \"description\": \"Monthly transfer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transfers",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transfers"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sourceAccountId\": \"{{accountId}}\",\n  \"destinationAccountId\": \"{{secondAccountId}}\",\n  \"amount\": \"1000.00\",\n  \"description\": \"Monthly transfer\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae2b41a0da9a703f6e3920\",\n    \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n    \"sourceAccountId\": \"6aae292ca0da9a703f6e3914\",\n    \"sourceAccountName\": \"HDFC Savings\",\n    \"destinationAccountId\": \"6aae292ca0da9a703f6e3915\",\n    \"destinationAccountName\": \"SBI Savings\",\n    \"amount\": \"10000.00\",\n    \"currency\": \"INR\",\n    \"kind\": \"BANK_TO_BANK\",\n    \"status\": \"COMPLETED\",\n    \"debitTransactionId\": \"6aae2b41a0da9a703f6e3921\",\n    \"creditTransactionId\": \"6aae2b41a0da9a703f6e3922\",\n    \"description\": \"Monthly transfer\",\n    \"createdAt\": \"2026-09-19T10:30:00Z\",\n    \"completedAt\": \"2026-09-19T10:30:00Z\"\n  },\n  \"message\": \"Transfer between two of the signed-in user's accounts\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transfers",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transfers"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sourceAccountId\": \"{{accountId}}\",\n  \"destinationAccountId\": \"{{secondAccountId}}\",\n  \"amount\": \"1000.00\",\n  \"description\": \"Monthly transfer\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "422",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"INSUFFICIENT_BALANCE\",\n  \"message\": \"Insufficient account balance\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/transfers\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "if (b.success) pm.collectionVariables.set('transferId', b.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Withdraw cash from a bank account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/transfers/bank-to-cash",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "transfers",
+                "bank-to-cash"
+              ]
+            },
+            "description": "Debits the bank account and credits the cash wallet.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"amount\": \"500.00\",\n  \"description\": \"ATM withdrawal\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transfers/bank-to-cash",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transfers",
+                    "bank-to-cash"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"amount\": \"500.00\",\n  \"description\": \"ATM withdrawal\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae2b41a0da9a703f6e3920\",\n    \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n    \"sourceAccountId\": \"6aae292ca0da9a703f6e3914\",\n    \"sourceAccountName\": \"HDFC Savings\",\n    \"destinationAccountId\": \"6aae292ca0da9a703f6e3915\",\n    \"destinationAccountName\": \"SBI Savings\",\n    \"amount\": \"10000.00\",\n    \"currency\": \"INR\",\n    \"kind\": \"BANK_TO_BANK\",\n    \"status\": \"COMPLETED\",\n    \"debitTransactionId\": \"6aae2b41a0da9a703f6e3921\",\n    \"creditTransactionId\": \"6aae2b41a0da9a703f6e3922\",\n    \"description\": \"Monthly transfer\",\n    \"createdAt\": \"2026-09-19T10:30:00Z\",\n    \"completedAt\": \"2026-09-19T10:30:00Z\"\n  },\n  \"message\": \"Withdraw cash from a bank account\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transfers/bank-to-cash",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transfers",
+                    "bank-to-cash"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"amount\": \"500.00\",\n  \"description\": \"ATM withdrawal\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "422",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"INSUFFICIENT_BALANCE\",\n  \"message\": \"Insufficient account balance\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/transfers/bank-to-cash\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Deposit cash into a bank account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/transfers/cash-to-bank",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "transfers",
+                "cash-to-bank"
+              ]
+            },
+            "description": "Debits the cash wallet and credits the bank account.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"amount\": \"200.00\",\n  \"description\": \"Cash deposit\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transfers/cash-to-bank",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transfers",
+                    "cash-to-bank"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"amount\": \"200.00\",\n  \"description\": \"Cash deposit\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae2b41a0da9a703f6e3920\",\n    \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n    \"sourceAccountId\": \"6aae292ca0da9a703f6e3914\",\n    \"sourceAccountName\": \"HDFC Savings\",\n    \"destinationAccountId\": \"6aae292ca0da9a703f6e3915\",\n    \"destinationAccountName\": \"SBI Savings\",\n    \"amount\": \"10000.00\",\n    \"currency\": \"INR\",\n    \"kind\": \"BANK_TO_BANK\",\n    \"status\": \"COMPLETED\",\n    \"debitTransactionId\": \"6aae2b41a0da9a703f6e3921\",\n    \"creditTransactionId\": \"6aae2b41a0da9a703f6e3922\",\n    \"description\": \"Monthly transfer\",\n    \"createdAt\": \"2026-09-19T10:30:00Z\",\n    \"completedAt\": \"2026-09-19T10:30:00Z\"\n  },\n  \"message\": \"Deposit cash into a bank account\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transfers/cash-to-bank",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transfers",
+                    "cash-to-bank"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"amount\": \"200.00\",\n  \"description\": \"Cash deposit\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "422",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"INSUFFICIENT_BALANCE\",\n  \"message\": \"Insufficient account balance\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/transfers/cash-to-bank\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List the signed-in user's transfers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/transfers?page=0&size=20&sort=transactionDate,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "transfers"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Zero-based page index"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Page size"
+                },
+                {
+                  "key": "sort",
+                  "value": "transactionDate,desc",
+                  "description": "field,asc|desc"
+                }
+              ]
+            },
+            "description": "List the signed-in user's transfers"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transfers?page=0&size=20&sort=transactionDate,desc",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transfers"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Zero-based page index"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "description": "Page size"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "transactionDate,desc",
+                      "description": "field,asc|desc"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"6aae2b41a0da9a703f6e3920\",\n      \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n      \"sourceAccountId\": \"6aae292ca0da9a703f6e3914\",\n      \"sourceAccountName\": \"HDFC Savings\",\n      \"destinationAccountId\": \"6aae292ca0da9a703f6e3915\",\n      \"destinationAccountName\": \"SBI Savings\",\n      \"amount\": \"10000.00\",\n      \"currency\": \"INR\",\n      \"kind\": \"BANK_TO_BANK\",\n      \"status\": \"COMPLETED\",\n      \"debitTransactionId\": \"6aae2b41a0da9a703f6e3921\",\n      \"creditTransactionId\": \"6aae2b41a0da9a703f6e3922\",\n      \"description\": \"Monthly transfer\",\n      \"createdAt\": \"2026-09-19T10:30:00Z\",\n      \"completedAt\": \"2026-09-19T10:30:00Z\"\n    }\n  ],\n  \"pagination\": {\n    \"page\": 0,\n    \"size\": 20,\n    \"totalElements\": 1,\n    \"totalPages\": 1\n  },\n  \"message\": \"List the signed-in user's transfers\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transfers?page=0&size=20&sort=transactionDate,desc",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transfers"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Zero-based page index"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "description": "Page size"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "transactionDate,desc",
+                      "description": "field,asc|desc"
+                    }
+                  ]
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/transfers\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get one transfer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/transfers/:transferId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "transfers",
+                ":transferId"
+              ],
+              "variable": [
+                {
+                  "key": "transferId",
+                  "value": "{{transferId}}",
+                  "description": "transferId of the resource"
+                }
+              ]
+            },
+            "description": "Get one transfer"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transfers/:transferId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transfers",
+                    ":transferId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "transferId",
+                      "value": "{{transferId}}",
+                      "description": "transferId of the resource"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae2b41a0da9a703f6e3920\",\n    \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n    \"sourceAccountId\": \"6aae292ca0da9a703f6e3914\",\n    \"sourceAccountName\": \"HDFC Savings\",\n    \"destinationAccountId\": \"6aae292ca0da9a703f6e3915\",\n    \"destinationAccountName\": \"SBI Savings\",\n    \"amount\": \"10000.00\",\n    \"currency\": \"INR\",\n    \"kind\": \"BANK_TO_BANK\",\n    \"status\": \"COMPLETED\",\n    \"debitTransactionId\": \"6aae2b41a0da9a703f6e3921\",\n    \"creditTransactionId\": \"6aae2b41a0da9a703f6e3922\",\n    \"description\": \"Monthly transfer\",\n    \"createdAt\": \"2026-09-19T10:30:00Z\",\n    \"completedAt\": \"2026-09-19T10:30:00Z\"\n  },\n  \"message\": \"Get one transfer\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transfers/:transferId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transfers",
+                    ":transferId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "transferId",
+                      "value": "{{transferId}}",
+                      "description": "transferId of the resource"
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/transfers/{transferId}\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cash",
+      "description": "Physical cash held by the signed-in user",
+      "item": [
+        {
+          "name": "Record cash received",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cash/deposit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cash",
+                "deposit"
+              ]
+            },
+            "description": "Record cash received",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"2000.00\",\n  \"description\": \"Cash received\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cash/deposit",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cash",
+                    "deposit"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": \"2000.00\",\n  \"description\": \"Cash received\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae11d2ee956131aeefc38d\",\n    \"transactionReference\": \"TXN-MU7WDIXJ-5825V2G4\",\n    \"accountId\": \"6aae292ca0da9a703f6e3914\",\n    \"accountName\": \"HDFC Savings\",\n    \"transactionType\": \"DEBIT\",\n    \"direction\": \"OUT\",\n    \"amount\": \"3000.00\",\n    \"currency\": \"INR\",\n    \"balanceBefore\": \"15000.00\",\n    \"balanceAfter\": \"12000.00\",\n    \"category\": \"SHOPPING\",\n    \"description\": \"Laptop purchase\",\n    \"merchant\": \"Amazon\",\n    \"transactionDate\": \"2026-09-19T10:30:00Z\",\n    \"postedAt\": \"2026-09-19T10:30:00Z\",\n    \"status\": \"POSTED\",\n    \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n    \"reversalOf\": \"string\",\n    \"metadata\": {\n      \"paymentMethod\": \"UPI\",\n      \"referenceNumber\": \"UPI123456\"\n    }\n  },\n  \"message\": \"Record cash received\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cash/deposit",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cash",
+                    "deposit"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": \"2000.00\",\n  \"description\": \"Cash received\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "422",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"INSUFFICIENT_BALANCE\",\n  \"message\": \"Insufficient account balance\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/cash/deposit\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Record cash spent",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cash/withdraw",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cash",
+                "withdraw"
+              ]
+            },
+            "description": "Refused with INSUFFICIENT_BALANCE when the cash balance will not cover it.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"1500.00\",\n  \"description\": \"Groceries\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cash/withdraw",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cash",
+                    "withdraw"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": \"1500.00\",\n  \"description\": \"Groceries\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"id\": \"6aae11d2ee956131aeefc38d\",\n    \"transactionReference\": \"TXN-MU7WDIXJ-5825V2G4\",\n    \"accountId\": \"6aae292ca0da9a703f6e3914\",\n    \"accountName\": \"HDFC Savings\",\n    \"transactionType\": \"DEBIT\",\n    \"direction\": \"OUT\",\n    \"amount\": \"3000.00\",\n    \"currency\": \"INR\",\n    \"balanceBefore\": \"15000.00\",\n    \"balanceAfter\": \"12000.00\",\n    \"category\": \"SHOPPING\",\n    \"description\": \"Laptop purchase\",\n    \"merchant\": \"Amazon\",\n    \"transactionDate\": \"2026-09-19T10:30:00Z\",\n    \"postedAt\": \"2026-09-19T10:30:00Z\",\n    \"status\": \"POSTED\",\n    \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n    \"reversalOf\": \"string\",\n    \"metadata\": {\n      \"paymentMethod\": \"UPI\",\n      \"referenceNumber\": \"UPI123456\"\n    }\n  },\n  \"message\": \"Record cash spent\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 422",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}",
+                    "description": "Required. A fresh GUID per operation. Reuse the SAME value to retry safely - the original result is returned instead of moving money twice."
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cash/withdraw",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cash",
+                    "withdraw"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"amount\": \"1500.00\",\n  \"description\": \"Groceries\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "422",
+              "code": 422,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"INSUFFICIENT_BALANCE\",\n  \"message\": \"Insufficient account balance\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/cash/withdraw\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get the current cash balance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cash",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cash"
+              ]
+            },
+            "description": "Get the current cash balance"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cash",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cash"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"accountId\": \"6aae292ca0da9a703f6e3916\",\n    \"currency\": \"INR\",\n    \"balance\": \"6500.00\",\n    \"status\": \"ACTIVE\",\n    \"updatedAt\": \"2026-09-19T10:30:00Z\"\n  },\n  \"message\": \"Get the current cash balance\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cash",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cash"
+                  ]
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/cash\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List cash transactions, newest first",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/cash/transactions?page=0&size=20&sort=transactionDate,desc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "cash",
+                "transactions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "Zero-based page index"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Page size"
+                },
+                {
+                  "key": "sort",
+                  "value": "transactionDate,desc",
+                  "description": "field,asc|desc"
+                }
+              ]
+            },
+            "description": "List cash transactions, newest first"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cash/transactions?page=0&size=20&sort=transactionDate,desc",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cash",
+                    "transactions"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Zero-based page index"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "description": "Page size"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "transactionDate,desc",
+                      "description": "field,asc|desc"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Request-Id",
+                  "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"6aae11d2ee956131aeefc38d\",\n      \"transactionReference\": \"TXN-MU7WDIXJ-5825V2G4\",\n      \"accountId\": \"6aae292ca0da9a703f6e3914\",\n      \"accountName\": \"HDFC Savings\",\n      \"transactionType\": \"DEBIT\",\n      \"direction\": \"OUT\",\n      \"amount\": \"3000.00\",\n      \"currency\": \"INR\",\n      \"balanceBefore\": \"15000.00\",\n      \"balanceAfter\": \"12000.00\",\n      \"category\": \"SHOPPING\",\n      \"description\": \"Laptop purchase\",\n      \"merchant\": \"Amazon\",\n      \"transactionDate\": \"2026-09-19T10:30:00Z\",\n      \"postedAt\": \"2026-09-19T10:30:00Z\",\n      \"status\": \"POSTED\",\n      \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n      \"reversalOf\": \"string\",\n      \"metadata\": {\n        \"paymentMethod\": \"UPI\",\n        \"referenceNumber\": \"UPI123456\"\n      }\n    }\n  ],\n  \"pagination\": {\n    \"page\": 0,\n    \"size\": 20,\n    \"totalElements\": 1,\n    \"totalPages\": 1\n  },\n  \"message\": \"List cash transactions, newest first\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            },
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cash/transactions?page=0&size=20&sort=transactionDate,desc",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cash",
+                    "transactions"
+                  ],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0",
+                      "description": "Zero-based page index"
+                    },
+                    {
+                      "key": "size",
+                      "value": "20",
+                      "description": "Page size"
+                    },
+                    {
+                      "key": "sort",
+                      "value": "transactionDate,desc",
+                      "description": "field,asc|desc"
+                    }
+                  ]
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/cash/transactions\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Session end",
+      "description": "Run last: logging out revokes all refresh tokens and invalidates outstanding access tokens.",
+      "item": [
+        {
+          "name": "Revoke every refresh token and invalidate outstanding access tokens (run last - revokes every token)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revoke every refresh token and invalidate outstanding access tokens"
+          },
+          "response": [
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/logout",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "logout"
+                  ]
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/auth/logout\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
