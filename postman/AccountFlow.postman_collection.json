@@ -18,7 +18,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8082"
+      "value": "https://accountflow-2eff.onrender.com"
     },
     {
       "key": "email",
@@ -58,6 +58,30 @@
     }
   ],
   "item": [
+    {
+      "name": "Health",
+      "description": "Liveness for load balancers and uptime checks",
+      "item": [
+        {
+          "name": "Service health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "200 with status UP when the database responds, 503 with status DOWN when it does not."
+          },
+          "response": []
+        }
+      ]
+    },
     {
       "name": "Authentication",
       "description": "Registration, sign-in and token lifecycle",
@@ -1173,6 +1197,113 @@
           ]
         },
         {
+          "name": "Download an account statement",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/accounts/:accountId/statement?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "accounts",
+                ":accountId",
+                "statement"
+              ],
+              "variable": [
+                {
+                  "key": "accountId",
+                  "value": "{{accountId}}",
+                  "description": "accountId of the resource"
+                }
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "format",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "A bank-style statement with opening and closing balances for the period. format=csv (default) or format=pdf; both carry the same figures. Periods and balances follow posting time in UTC, so opening plus the listed movements always equals closing."
+          },
+          "response": [
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/accounts/:accountId/statement?",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "accounts",
+                    ":accountId",
+                    "statement"
+                  ],
+                  "variable": [
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "to",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "format",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/accounts/{accountId}/statement\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
           "name": "Update an account's descriptive fields",
           "request": {
             "method": "PUT",
@@ -1995,7 +2126,7 @@
           ]
         },
         {
-          "name": "List all of the signed-in user's transactions",
+          "name": "List the signed-in user's transactions, filtered",
           "request": {
             "method": "GET",
             "header": [],
@@ -2027,7 +2158,7 @@
                 }
               ]
             },
-            "description": "List all of the signed-in user's transactions"
+            "description": "Every filter is optional. `from` and `to` are calendar dates in UTC and both are inclusive, so from=2026-09-01&to=2026-09-30 covers September whole."
           },
           "response": [
             {
@@ -2077,7 +2208,7 @@
                   "value": "0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88"
                 }
               ],
-              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"6aae11d2ee956131aeefc38d\",\n      \"transactionReference\": \"TXN-MU7WDIXJ-5825V2G4\",\n      \"accountId\": \"6aae292ca0da9a703f6e3914\",\n      \"accountName\": \"HDFC Savings\",\n      \"transactionType\": \"DEBIT\",\n      \"direction\": \"OUT\",\n      \"amount\": \"3000.00\",\n      \"currency\": \"INR\",\n      \"balanceBefore\": \"15000.00\",\n      \"balanceAfter\": \"12000.00\",\n      \"category\": \"SHOPPING\",\n      \"description\": \"Laptop purchase\",\n      \"merchant\": \"Amazon\",\n      \"transactionDate\": \"2026-09-19T10:30:00Z\",\n      \"postedAt\": \"2026-09-19T10:30:00Z\",\n      \"status\": \"POSTED\",\n      \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n      \"reversalOf\": \"string\",\n      \"metadata\": {\n        \"paymentMethod\": \"UPI\",\n        \"referenceNumber\": \"UPI123456\"\n      }\n    }\n  ],\n  \"pagination\": {\n    \"page\": 0,\n    \"size\": 20,\n    \"totalElements\": 1,\n    \"totalPages\": 1\n  },\n  \"message\": \"List all of the signed-in user's transactions\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"id\": \"6aae11d2ee956131aeefc38d\",\n      \"transactionReference\": \"TXN-MU7WDIXJ-5825V2G4\",\n      \"accountId\": \"6aae292ca0da9a703f6e3914\",\n      \"accountName\": \"HDFC Savings\",\n      \"transactionType\": \"DEBIT\",\n      \"direction\": \"OUT\",\n      \"amount\": \"3000.00\",\n      \"currency\": \"INR\",\n      \"balanceBefore\": \"15000.00\",\n      \"balanceAfter\": \"12000.00\",\n      \"category\": \"SHOPPING\",\n      \"description\": \"Laptop purchase\",\n      \"merchant\": \"Amazon\",\n      \"transactionDate\": \"2026-09-19T10:30:00Z\",\n      \"postedAt\": \"2026-09-19T10:30:00Z\",\n      \"status\": \"POSTED\",\n      \"transferReference\": \"TRF-MU7ZXNRJ-M49PS4Z8\",\n      \"reversalOf\": \"string\",\n      \"metadata\": {\n        \"paymentMethod\": \"UPI\",\n        \"referenceNumber\": \"UPI123456\"\n      }\n    }\n  ],\n  \"pagination\": {\n    \"page\": 0,\n    \"size\": 20,\n    \"totalElements\": 1,\n    \"totalPages\": 1\n  },\n  \"message\": \"List the signed-in user's transactions, filtered\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
             },
             {
               "name": "Error 401",
@@ -2123,6 +2254,181 @@
                 }
               ],
               "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/transactions\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Download the signed-in user's transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/transactions/export?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "transactions",
+                "export"
+              ],
+              "query": [
+                {
+                  "key": "accountId",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "transactionType",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "minAmount",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "maxAmount",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "merchant",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "query",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "format",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "format=csv (default) or format=pdf. Same filters as the list endpoint. CSV is streamed from a cursor so any date range is safe; PDF is a paginated document and is capped at 2000 rows."
+          },
+          "response": [
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/transactions/export?",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "transactions",
+                    "export"
+                  ],
+                  "query": [
+                    {
+                      "key": "accountId",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "transactionType",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "category",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "from",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "to",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "minAmount",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "maxAmount",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "merchant",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "query",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "format",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/transactions/export\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
             }
           ]
         },
@@ -3407,6 +3713,1169 @@
                 }
               ],
               "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/cash/transactions\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "User management and ledger access. Administrators only.",
+      "item": [
+        {
+          "name": "Create a user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users"
+              ]
+            },
+            "description": "Create a user",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Asha\",\n  \"lastName\": \"Menon\",\n  \"email\": \"asha@example.com\",\n  \"phone\": \"+919812345678\",\n  \"password\": \"Secret123\",\n  \"role\": \"USER\",\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "users"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Asha\",\n  \"lastName\": \"Menon\",\n  \"email\": \"asha@example.com\",\n  \"phone\": \"+919812345678\",\n  \"password\": \"Secret123\",\n  \"role\": \"USER\",\n  \"status\": \"ACTIVE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/admin/users\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Deactivate a user",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:userId/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":userId",
+                "deactivate"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "userId of the resource"
+                }
+              ]
+            },
+            "description": "The reversible removal: access is revoked immediately, accounts and ledger are kept."
+          },
+          "response": [
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/:userId/deactivate",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "users",
+                    ":userId",
+                    "deactivate"
+                  ],
+                  "variable": [
+                    {
+                      "key": "userId",
+                      "value": "",
+                      "description": "userId of the resource"
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/admin/users/{userId}/deactivate\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Set a new password for a user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:userId/password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":userId",
+                "password"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "userId of the resource"
+                }
+              ]
+            },
+            "description": "Also clears any lockout and signs the user out everywhere.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"NewSecret123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/:userId/password",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "users",
+                    ":userId",
+                    "password"
+                  ],
+                  "variable": [
+                    {
+                      "key": "userId",
+                      "value": "",
+                      "description": "userId of the resource"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"password\": \"NewSecret123\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/admin/users/{userId}/password\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List and search users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "pageable",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "Matches the query against email, name and phone."
+          },
+          "response": [
+            {
+              "name": "Error 401",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users?",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "users"
+                  ],
+                  "query": [
+                    {
+                      "key": "query",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "status",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "role",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "pageable",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "status": "401",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"UNAUTHENTICATED\",\n  \"message\": \"Authentication is required\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/admin/users\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get one user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":userId"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "userId of the resource"
+                }
+              ]
+            },
+            "description": "Get one user"
+          },
+          "response": [
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/:userId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "users",
+                    ":userId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "userId",
+                      "value": "",
+                      "description": "userId of the resource"
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/admin/users/{userId}\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "List a user's accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:userId/accounts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":userId",
+                "accounts"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "userId of the resource"
+                }
+              ]
+            },
+            "description": "Includes the cash account, so a statement can be taken for it too."
+          },
+          "response": [
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/:userId/accounts",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "users",
+                    ":userId",
+                    "accounts"
+                  ],
+                  "variable": [
+                    {
+                      "key": "userId",
+                      "value": "",
+                      "description": "userId of the resource"
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/admin/users/{userId}/accounts\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Download a statement for one of a user's accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:userId/accounts/:accountId/statement?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":userId",
+                "accounts",
+                ":accountId",
+                "statement"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "userId of the resource"
+                },
+                {
+                  "key": "accountId",
+                  "value": "{{accountId}}",
+                  "description": "accountId of the resource"
+                }
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "format",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "format=csv (default) or format=pdf. Includes opening and closing balances."
+          },
+          "response": [
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/:userId/accounts/:accountId/statement?",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "users",
+                    ":userId",
+                    "accounts",
+                    ":accountId",
+                    "statement"
+                  ],
+                  "variable": [
+                    {
+                      "key": "userId",
+                      "value": "",
+                      "description": "userId of the resource"
+                    },
+                    {
+                      "key": "accountId",
+                      "value": "{{accountId}}",
+                      "description": "accountId of the resource"
+                    }
+                  ],
+                  "query": [
+                    {
+                      "key": "from",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "to",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "format",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/admin/users/{userId}/accounts/{accountId}/statement\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "A user's ledger, filtered",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:userId/transactions?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":userId",
+                "transactions"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "userId of the resource"
+                }
+              ],
+              "query": [
+                {
+                  "key": "accountId",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "transactionType",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "minAmount",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "maxAmount",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "merchant",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "query",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "pageable",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "from/to are calendar dates in UTC and both are inclusive."
+          },
+          "response": [
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/:userId/transactions?",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "users",
+                    ":userId",
+                    "transactions"
+                  ],
+                  "variable": [
+                    {
+                      "key": "userId",
+                      "value": "",
+                      "description": "userId of the resource"
+                    }
+                  ],
+                  "query": [
+                    {
+                      "key": "accountId",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "transactionType",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "category",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "from",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "to",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "minAmount",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "maxAmount",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "merchant",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "query",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "pageable",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/admin/users/{userId}/transactions\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Download a user's ledger",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:userId/transactions/export?",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":userId",
+                "transactions",
+                "export"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "userId of the resource"
+                }
+              ],
+              "query": [
+                {
+                  "key": "accountId",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "transactionType",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "category",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "from",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "to",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "minAmount",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "maxAmount",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "merchant",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "query",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                },
+                {
+                  "key": "format",
+                  "value": "",
+                  "disabled": true,
+                  "description": ""
+                }
+              ]
+            },
+            "description": "format=csv (default) or format=pdf. CSV is streamed so any range is safe; PDF is a paginated document capped at 2000 rows."
+          },
+          "response": [
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/:userId/transactions/export?",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "users",
+                    ":userId",
+                    "transactions",
+                    "export"
+                  ],
+                  "variable": [
+                    {
+                      "key": "userId",
+                      "value": "",
+                      "description": "userId of the resource"
+                    }
+                  ],
+                  "query": [
+                    {
+                      "key": "accountId",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "transactionType",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "category",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "from",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "to",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "minAmount",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "maxAmount",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "merchant",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "query",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    },
+                    {
+                      "key": "format",
+                      "value": "",
+                      "disabled": true,
+                      "description": ""
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/admin/users/{userId}/transactions/export\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update a user's details, role or status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":userId"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "userId of the resource"
+                }
+              ]
+            },
+            "description": "Moving a user out of ACTIVE revokes their tokens immediately. You cannot change your own role or status, and the last active administrator cannot be demoted.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Asha\",\n  \"lastName\": \"Menon\",\n  \"phone\": \"+919812345678\",\n  \"role\": \"USER\",\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/:userId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "users",
+                    ":userId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "userId",
+                      "value": "",
+                      "description": "userId of the resource"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"firstName\": \"Asha\",\n  \"lastName\": \"Menon\",\n  \"phone\": \"+919812345678\",\n  \"role\": \"USER\",\n  \"status\": \"ACTIVE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/admin/users/{userId}\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Permanently delete a user",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/admin/users/:userId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "admin",
+                "users",
+                ":userId"
+              ],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "userId of the resource"
+                }
+              ]
+            },
+            "description": "Only for a user who holds no accounts and no transactions. Anyone with financial records is refused with USER_HAS_RECORDS - deactivate them instead, so the ledger still reconciles."
+          },
+          "response": [
+            {
+              "name": "Error 404",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/admin/users/:userId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "admin",
+                    "users",
+                    ":userId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "userId",
+                      "value": "",
+                      "description": "userId of the resource"
+                    }
+                  ]
+                }
+              },
+              "status": "404",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": false,\n  \"code\": \"ACCOUNT_NOT_FOUND\",\n  \"message\": \"Account not found\",\n  \"timestamp\": \"2026-09-19T10:30:00Z\",\n  \"path\": \"/api/v1/admin/users/{userId}\",\n  \"requestId\": \"0f9c1a52-8f1e-4a7b-9a3d-2c6b5e4d1a88\"\n}"
             }
           ]
         }

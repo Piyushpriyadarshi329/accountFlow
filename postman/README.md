@@ -1,8 +1,8 @@
 # AccountFlow API collection
 
 Generated from the live OpenAPI document (`/v3/api-docs`), so it cannot drift
-from the API. 26 requests across 7 folders, verified end to end against a
-running server.
+from the API. 27 requests across 8 folders, verified end to end against the deployed API
+(27/27 passing).
 
 | File | Purpose |
 |---|---|
@@ -13,7 +13,9 @@ running server.
 
 1. Import both files into Postman (or Insomnia / Thunder Client / Bruno —
    all read v2.1).
-2. Check `baseUrl`; it defaults to `http://localhost:8082`.
+2. `baseUrl` defaults to the deployed API
+   (`https://accountflow-2eff.onrender.com`), so nothing needs to be running
+   locally. Point it at `http://localhost:8082` to work against a local server.
 3. Hit **Run collection**. It passes top to bottom with no manual editing, and
    can be re-run as many times as you like: each run mints a fresh user.
 
@@ -23,6 +25,14 @@ Captured automatically by the test scripts: `email`, `accessToken`,
 nothing needs pasting by hand.
 
 `Session end → logout` is last on purpose: it revokes every token.
+
+### Health
+
+`Health → Service health` hits `/health`, which is unauthenticated and pings
+MongoDB — it returns `503 DOWN` if the database is unreachable rather than a
+constant `UP`. It runs first so a failing collection run tells you immediately
+whether the service is even reachable. On the free Render tier the first call
+after ~15 minutes idle also wakes the instance, which takes a while.
 
 ## Building a React Native client against this
 

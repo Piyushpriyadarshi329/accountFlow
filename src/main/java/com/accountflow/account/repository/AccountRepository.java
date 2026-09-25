@@ -24,4 +24,8 @@ public interface AccountRepository extends MongoRepository<Account, String> {
 
 	boolean existsByUserIdAndAccountNumber(String userId, String accountNumber);
 
+	long countByUserId(String userId);
+
+	long countByUserIdAndSystemCashWalletFalse(String userId);
+
 }

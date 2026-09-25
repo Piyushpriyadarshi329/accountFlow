@@ -14,7 +14,10 @@ import com.accountflow.transaction.domain.TransactionType;
 import com.accountflow.transaction.dto.PostTransactionRequest;
 import com.accountflow.transaction.dto.TransactionResponse;
 import com.accountflow.transaction.mapper.TransactionMapper;
+import com.accountflow.transaction.dto.TransactionFilter;
+import com.accountflow.transaction.export.TransactionCsvWriter;
 import com.accountflow.transaction.repository.TransactionRepository;
+import com.accountflow.transaction.repository.TransactionSearchRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
@@ -28,6 +31,9 @@ public class TransactionService {
 
 	private static final Logger log = LoggerFactory.getLogger(TransactionService.class);
 
+	/** A PDF is a document to read; past this the CSV export is the right tool. */
+	private static final int MAX_PDF_ROWS = 2000;
+
 	private final LedgerService ledgerService;
 
 	private final TransactionRepository transactionRepository;
@@ -36,12 +42,20 @@ public class TransactionService {
 
 	private final MoneyOperationExecutor executor;
 
+	private final TransactionSearchRepository searchRepository;
+
+	private final com.accountflow.user.repository.UserRepository userRepository;
+
 	public TransactionService(LedgerService ledgerService, TransactionRepository transactionRepository,
-			IdempotencyService idempotencyService, MoneyOperationExecutor executor) {
+			IdempotencyService idempotencyService, MoneyOperationExecutor executor,
+			TransactionSearchRepository searchRepository,
+			com.accountflow.user.repository.UserRepository userRepository) {
 		this.ledgerService = ledgerService;
 		this.transactionRepository = transactionRepository;
 		this.idempotencyService = idempotencyService;
 		this.executor = executor;
+		this.searchRepository = searchRepository;
+		this.userRepository = userRepository;
 	}
 
 	public TransactionResponse post(String userId, String accountId, TransactionType type,
@@ -105,6 +119,49 @@ public class TransactionService {
 
 	public Page<TransactionResponse> list(String userId, Pageable pageable) {
 		return this.transactionRepository.findByUserId(userId, pageable).map(TransactionMapper::toResponse);
+	}
+
+	/** The signed-in user's own ledger, filtered. Scoped by userId at the query. */
+	public Page<TransactionResponse> search(String userId, TransactionFilter filter, Pageable pageable) {
+		return this.searchRepository.search(userId, filter, pageable).map(TransactionMapper::toResponse);
+	}
+
+	/**
+	 * The caller's own ledger as a PDF.
+	 *
+	 * <p>Unlike the CSV, this cannot stream: a paginated document has to know
+	 * its rows. It is therefore capped, and says so on the page when it bites -
+	 * the CSV export stays the route for a whole year of data.
+	 */
+	public void exportPdf(String userId, TransactionFilter filter, String holderName, String holderEmail,
+			java.io.OutputStream out) throws java.io.IOException {
+		// Fall back to a lookup so the document names the person, not just their
+		// address - the caller often only has the email from the token.
+		String name = (holderName != null && !holderName.isBlank()) ? holderName
+				: this.userRepository.findById(userId)
+					.map(com.accountflow.user.domain.User::fullName)
+					.orElse(null);
+		java.util.List<com.accountflow.transaction.domain.Transaction> rows;
+		try (java.util.stream.Stream<com.accountflow.transaction.domain.Transaction> stream = this.searchRepository
+			.stream(userId, filter)) {
+			rows = stream.limit(MAX_PDF_ROWS + 1L).collect(java.util.stream.Collectors.toList());
+		}
+		boolean truncated = rows.size() > MAX_PDF_ROWS;
+		if (truncated) {
+			rows = rows.subList(0, MAX_PDF_ROWS);
+		}
+		// The cursor gives newest first; a document reads better oldest first.
+		java.util.Collections.reverse(rows);
+		com.accountflow.transaction.export.TransactionPdfWriter.write(rows, name, holderEmail, filter.from(),
+				filter.to(), truncated, out);
+	}
+
+	/** Streams the caller's own ledger as CSV. */
+	public long export(String userId, TransactionFilter filter, java.io.Writer out) throws java.io.IOException {
+		try (java.util.stream.Stream<com.accountflow.transaction.domain.Transaction> rows = this.searchRepository
+			.stream(userId, filter)) {
+			return TransactionCsvWriter.write(rows, out);
+		}
 	}
 
 	private TransactionResponse replay(String userId, String endpoint, String idempotencyKey, String fingerprint) {

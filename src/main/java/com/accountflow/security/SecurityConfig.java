@@ -46,6 +46,11 @@ public class SecurityConfig {
 				.permitAll()
 				.requestMatchers(HttpMethod.OPTIONS, "/**")
 				.permitAll()
+				// Belt and braces: the controller also carries @PreAuthorize. A
+				// URL rule alone is one forgotten pattern away from exposing user
+				// management, and the annotation alone is one missing @EnableMethodSecurity away.
+				.requestMatchers("/api/v1/admin/**")
+				.hasRole("ADMIN")
 				.anyRequest()
 				.authenticated())
 			.exceptionHandling((ex) -> ex.authenticationEntryPoint(this.authenticationEntryPoint)

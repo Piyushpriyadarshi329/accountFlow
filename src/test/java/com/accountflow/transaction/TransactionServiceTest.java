@@ -46,9 +46,15 @@ class TransactionServiceTest {
 	@Mock
 	private MoneyOperationExecutor executor;
 
+	@Mock
+	private com.accountflow.transaction.repository.TransactionSearchRepository searchRepository;
+
+	@Mock
+	private com.accountflow.user.repository.UserRepository userRepository;
+
 	private TransactionService service() {
 		return new TransactionService(this.ledgerService, this.transactionRepository, this.idempotencyService,
-				this.executor);
+				this.executor, this.searchRepository, this.userRepository);
 	}
 
 	private static PostTransactionRequest request() {

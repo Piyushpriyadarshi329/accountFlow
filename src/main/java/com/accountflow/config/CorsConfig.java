@@ -38,8 +38,11 @@ public class CorsConfig {
 		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(
 				List.of("Authorization", "Content-Type", "Accept", "Idempotency-Key", "X-Request-Id"));
-		// So a browser client can read the correlation id off the response.
-		configuration.setExposedHeaders(List.of("X-Request-Id"));
+		// A browser hides every response header from script except a safelisted
+		// few, so these have to be named: the correlation id for diagnostics, and
+		// Content-Disposition so a download saves under the name the server chose
+		// (which carries the user and the period) instead of a client-side guess.
+		configuration.setExposedHeaders(List.of("X-Request-Id", "Content-Disposition"));
 		// Tokens travel in the Authorization header, not cookies, so credentials
 		// are not needed - and leaving them off keeps the policy tighter.
 		configuration.setAllowCredentials(false);

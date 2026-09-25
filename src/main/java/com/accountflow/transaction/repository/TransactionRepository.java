@@ -17,4 +17,6 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
 
 	Optional<Transaction> findByIdempotencyKey(String idempotencyKey);
 
+	long countByUserId(String userId);
+
 }
